@@ -1,0 +1,59 @@
+---
+// Hero.astro - Full viewport hero section for Just Screw It
+---
+
+<section class="relative min-h-screen flex flex-col justify-center items-center text-center overflow-hidden">
+  <!-- Background with gradient and diagonal stripes -->
+  <div class="absolute inset-0 bg-gradient-to-br from-[#0F0F23] to-[#1A1A3E]"></div>
+  <div class="absolute inset-0 opacity-[0.03]" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(124,58,237,0.3) 40px, rgba(124,58,237,0.3) 42px);"></div>
+
+  <!-- Content -->
+  <div class="relative z-10 px-6 pt-24 max-w-5xl mx-auto flex-1 flex flex-col justify-center">
+    <!-- Logo -->
+    <div class="mb-8 animate-fade-in-up">
+      <img src="/logo.png" alt="Just Screw It logo" class="w-32 h-32 md:w-44 md:h-44 mx-auto rounded-full shadow-2xl shadow-primary/20 ring-2 ring-primary/30" />
+    </div>
+
+    <!-- Headline -->
+    <h1 class="font-heading font-black text-5xl md:text-7xl lg:text-8xl uppercase leading-tight animate-fade-in-up">
+      <span class="block text-white">Stop Met Excuses.</span>
+      <span class="block">Begin Met <span class="gradient-text">Kilometers</span>.</span>
+    </h1>
+
+    <!-- Subheadline -->
+    <p class="mt-6 text-xl md:text-2xl text-muted max-w-2xl mx-auto animate-fade-in-up animate-delay-100">
+      De hardloopgroep voor mensen die hun wekker vervloeken, hun excuses hebben opgegeven, en toch elke keer weer komen opdagen. Waarom? Geen idee. Maar het werkt.
+    </p>
+
+    <!-- Buttons -->
+    <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animate-delay-200">
+      <a href="#aanmelden" class="btn-cta">Ik Doe Mee</a>
+      <a href="#schema" class="btn-secondary">Bekijk Schema</a>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="relative z-10 w-full max-w-3xl mx-auto px-6 pb-24 animate-fade-in-up animate-delay-300">
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-0 sm:divide-x sm:divide-white/20">
+      <div class="px-8 text-center">
+        <span class="block text-3xl md:text-4xl font-heading font-black text-white">340+</span>
+        <span class="block text-sm text-muted uppercase tracking-wider mt-1">Lopers</span>
+      </div>
+      <div class="px-8 text-center">
+        <span class="block text-3xl md:text-4xl font-heading font-black text-white">15+</span>
+        <span class="block text-sm text-muted uppercase tracking-wider mt-1">Steden</span>
+      </div>
+      <div class="px-8 text-center">
+        <span class="block text-3xl md:text-4xl font-heading font-black text-white">3x</span>
+        <span class="block text-sm text-muted uppercase tracking-wider mt-1">Per Week</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-10">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/40">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </div>
+</section>
