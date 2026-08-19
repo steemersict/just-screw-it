@@ -185,8 +185,17 @@ ingebouwd. Verwerkingsregister en privacyverklaring benoemen alle partijen.
 ## 10. Wat we bewust niet bouwen
 
 Geen B2B Suite, geen custom plugins zolang standaardfunctionaliteit volstaat, geen
-headless frontend (Sales Channels volstaan), geen FEKO-koppeling, geen
-voorraadbeheer, geen admin-maatwerk, geen meertaligheid.
+FEKO-koppeling, geen voorraadbeheer, geen admin-maatwerk, geen meertaligheid.
+
+Geen headless frontend in fase 0 t/m 4. De standaard Twig-storefront volstaat, en
+headless kost precies wat Shopware hier moest opleveren: Sales Channels worden weer
+bouwwerk, Shopping Experiences moeten per bloktype nagebouwd worden, en de checkout
+komt opnieuw op tafel.
+
+**Wel als fase 5 vastgelegd:** zodra de shop draait, een headless storefront als
+tweede Sales Channel voor één doelgroep, naast de Twig-versie zodat ze te vergelijken
+zijn. Valt die keuze dan, dan ligt Nuxt voor de hand boven Astro — Shopware's
+CMS-componenten en composables zijn Vue-specifiek, dus in Astro bouw je die zelf.
 
 ## 11. Fasering
 

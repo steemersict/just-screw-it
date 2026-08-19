@@ -809,7 +809,7 @@ git add docs/testrondes.md && git commit -m "docs: eerste end-to-end testronde"
 
 - [ ] **Stap 1: Kies en koppel het definitieve domein**
 
-Spec §13.2: `justscrewitrunning.com` vervalt. Zet DNS naar de VPS en pas `SITE_DOMAIN` aan in `.env`.
+Spec §13.2: er is nog geen domein. Registreer er een, zet DNS naar de VPS en pas `SITE_DOMAIN` aan in `.env`.
 
 - [ ] **Stap 2: Haal de toegangsbeperking en noindex weg**
 
