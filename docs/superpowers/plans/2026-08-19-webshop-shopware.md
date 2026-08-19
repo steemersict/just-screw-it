@@ -117,6 +117,22 @@ Verwacht: "Hello from Docker!" en een Compose-versie van 2.x of hoger.
 
 De hardloop-landingspagina vervalt (spec §1). De git-historie bewaart hem.
 
+**Waar de repo staat:** de repo bestaat op twee plekken — op de werkmachine en op de
+VPS onder `~/just-screw-it`, beide gekoppeld aan dezelfde GitHub-remote. De VPS is de
+enige *draaiende* omgeving; synchroniseren gaat via push en pull, nooit via scp of
+handmatig kopiëren. Voer stappen 1 tot en met 5 uit op de werkmachine, tenzij anders
+vermeld.
+
+- [ ] **Stap 0: Kloon de repo op de VPS**
+
+```bash
+ssh deploy@<ip>
+git clone git@github.com:steemersict/just-screw-it.git ~/just-screw-it
+cd ~/just-screw-it && git branch --show-current
+```
+
+Verwacht: `feature/webshop`. Zo niet: `git checkout feature/webshop`.
+
 - [ ] **Stap 1: Verwijder de Astro-site**
 
 ```bash
@@ -635,11 +651,23 @@ Verwacht: exitcode 1 en de melding "prijs moet groter dan 0 zijn". Zet daarna te
 
 Instellingen → Import/Export. Maak een importprofiel voor producten, koppel de kolommen aan de Shopware-velden en importeer. Gebruik `product` om varianten te groeperen.
 
-- [ ] **Stap 5: Controleer het resultaat in de storefront**
+- [ ] **Stap 5: Zet voorraadbeheer uit**
 
-Verwacht: vier productpagina's, per pagina een variantkiezer, en filters die daadwerkelijk resultaten wegfilteren. Verwacht óók: alle artikelen zijn bestelbaar zonder voorraadmelding (voorraadbeheer staat uit).
+Randvoorwaarde uit de spec: alle artikelen zijn altijd bestelbaar, want FEKO levert en
+wij houden geen voorraad bij. Zet in het importprofiel per variant een ruime voorraad
+én zet "Uitverkocht wanneer voorraad op is" (closeout) uit.
 
-- [ ] **Stap 6: Commit**
+Controleer daarna op een variant in de admin dat closeout uit staat, en zet in de
+storefront een testbestelling met een aantal boven de ingestelde voorraad in de
+winkelwagen.
+Verwacht: dat mag gewoon. Krijg je een melding dat er onvoldoende voorraad is, dan
+staat closeout nog aan.
+
+- [ ] **Stap 6: Controleer het resultaat in de storefront**
+
+Verwacht: vier productpagina's, per pagina een variantkiezer, en filters die daadwerkelijk resultaten wegfilteren.
+
+- [ ] **Stap 7: Commit**
 
 ```bash
 git add data/dummy-producten.csv && git commit -m "feat: dummy-catalogus voor het testen van de importketen"
