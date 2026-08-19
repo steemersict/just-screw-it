@@ -61,13 +61,39 @@ Afgewogen en afgevallen:
 
 ## 3. Omgeving en hosting
 
-**Ontwikkeling lokaal met Docker. Productie op een eigen EU-VPS, pas zodra er iets
-te tonen valt.**
+**Alles op een eigen EU-VPS, in Docker, vanaf dag één.**
 
-Reden voor die volgorde: Shopware op een zelfbeheerde VPS betekent PHP-FPM,
-database-tuning, Redis, cron, message queue workers, TLS, backups en updates. Dat
-allemaal vooraf doen betekent maanden sysadmin vóór het eerste leerdoel aan bod komt.
-De VPS blijft het doel — alleen niet als startpunt.
+Lokaal draaien valt af: de werkmachine heeft 8 GB RAM en Shopware vraagt al 4 GB
+minimum. Met Docker Desktop erbij wordt dat een swappende machine in plaats van een
+leeromgeving.
+
+Richtlijn voor de VPS: 8 GB RAM en 4 vCPU met NVMe-opslag. Met 4 GB kun je beginnen
+als OpenSearch uit blijft, maar dan zit je krap zodra de import en de indexering
+tegelijk lopen. EU-datacenter, want dat draagt het AVG-verhaal uit §9.
+
+Voor de containers zelf: Shopware's eigen Docker-opzet of de kant-en-klare
+dockware-images uit de community. Bij het opzetten controleren welke tag bij
+Shopware 6.7 hoort.
+
+### 3.1 Werkwijze
+
+Het meeste werk voor de leerdoelen gebeurt in de **Shopware-admin in de browser**:
+catalogus, property groups, Sales Channels, Rule Builder, SEO-instellingen,
+Flow Builder. Daar is geen lokale ontwikkelomgeving voor nodig.
+
+Code-werk komt pas bij thema-aanpassingen en eventuele plugins. Dat gaat via git:
+bewerken op de werkmachine, pushen, uitrollen op de VPS. Zo blijft de VPS de enige
+draaiende omgeving zonder dat de code er alleen daar bestaat.
+
+### 3.2 Afscherming en beheer
+
+De shop staat vanaf dag één op het open internet. Daarom meteen, niet later:
+
+- `noindex` en toegangsbeperking (basic auth of Cloudflare Access) tot livegang.
+  Een half afgebouwde shop die geïndexeerd raakt werkt leerdoel 3 actief tegen.
+- Firewall dicht op alles behalve 80, 443 en SSH; SSH alleen op sleutels.
+- Automatische backups van database en bestanden, inclusief één geteste restore.
+  Een backup die nooit teruggezet is, is een aanname.
 
 ## 4. Catalogus en productdata
 
@@ -166,10 +192,10 @@ voorraadbeheer, geen admin-maatwerk, geen meertaligheid.
 
 | Fase | Resultaat |
 |---|---|
-| 0 | Shopware draait lokaal in Docker; Astro verwijderd uit de repo |
+| 0 | VPS ingericht, Shopware draait in Docker en is afgeschermd bereikbaar; Astro verwijderd uit de repo |
 | 1 | Catalogus: categorieën, property groups, import vanuit de FEKO-lijst, filters werkend |
 | 2 | Mollie, verzendmethode, juridische pagina's, testbestelling end-to-end |
-| 3 | Productie op eigen EU-VPS, TLS, backups, Cloudflare ervoor |
+| 3 | Livegang: eigen domein, TLS, `noindex` eraf, backups getest, Cloudflare ervoor |
 | 4 | Leerdoelen: Sales Channels, Rule Builder, SEO en Core Web Vitals, Flow Builder |
 
 ## 12. Verificatie
@@ -187,4 +213,4 @@ voorraadbeheer, geen admin-maatwerk, geen meertaligheid.
    verzonden wordt zonder FEKO-branding.
 2. Domeinnaam kiezen. `justscrewitrunning.com` uit de oude Astro-config vervalt.
 3. Mailprovider kiezen met EU-verwerking, of mail via de eigen server.
-4. VPS-provider en backupstrategie bepalen vóór fase 3.
+4. VPS-provider kiezen en de eerste restore-test uitvoeren in fase 0.
