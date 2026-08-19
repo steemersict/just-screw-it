@@ -94,7 +94,7 @@ Velden per SKU:
 | `diameter_mm` | nee | facet |
 | `lengte_mm` | nee | facet |
 | `kopvorm` | nee | facet |
-| `gewicht_gram` | ja | nog niet gebruikt, zie §7 |
+| `gewicht_gram` | nee | wordt verplicht zodra verzenden op gewicht gaat, zie §7 |
 | `ean` | nee | vooruitlopend op bol.com, zie §9 |
 | `afbeelding` | nee | valt terug op categoriebeeld |
 
@@ -143,6 +143,10 @@ Afrekenen:
 Verzendkosten bij livegang: vast €6,95, gratis boven €75. `gewicht_gram` staat wel
 in de data maar wordt nog niet gebruikt, zodat er een zwaartestaffel bij kan zodra
 FEKO's dropship-tarief bekend is, zonder de productdata opnieuw te maken.
+
+Er lopen gesprekken met FEKO over een vast dropship-tarief; zodra dat er is, wordt
+dat de basis onder het verzendtarief. Punten om daar te regelen: tarief per
+zending, wat er gebeurt boven 10 kg, en wie de retourvracht betaalt.
 
 Marktbenchmark voor die onderhandeling: PostNL zakelijk circa €7,10, DHL circa
 €6,45 naar een huisadres, circa €5,45 via MyParcel bij ~150 zendingen per maand.
