@@ -144,7 +144,13 @@ git commit -m "chore: Astro-landingspagina verwijderd, repo wordt Shopware-proje
 
 - [ ] **Stap 2: Maak het Shopware-project aan**
 
-Op de VPS, in een tijdelijke map. Dit gebruikt PHP en Composer uit een container, zodat je niets hoeft te installeren:
+Op de VPS, in een tijdelijke map. `npx` vereist Node, dat taak 2 niet installeert —
+installeer het dus eerst, of gebruik de Docker-route uit de documentatie:
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs && node --version
+```
 
 ```bash
 cd /tmp
