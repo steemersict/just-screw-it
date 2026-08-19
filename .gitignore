@@ -1,7 +1,18 @@
-node_modules/
-dist/
-.astro/
+# Shopware-specific
+.env
+.env.local
+/vendor/
+/var/
+/public/media/
+/files/
+
+# OS and IDE
 .DS_Store
-*.env
-.env.*
-Gemini_Generated_Image_*
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node/Build
+node_modules/
+dist/*
