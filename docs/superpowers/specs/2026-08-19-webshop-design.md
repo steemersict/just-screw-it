@@ -3,209 +3,188 @@
 Datum: 2026-08-19
 Branch: `feature/webshop`
 Status: ter review
+Vervangt: de eerste versie van dit spec (Astro + Cloudflare Workers + Mollie), zie git-historie
 
-## 1. Wat we bouwen
+## 1. Doel en context
 
-Een B2C-webshop voor bevestigingsmateriaal, gedropshipt via FEKO BV. 300-500 SKU's
-in acht categorieën. Gastcheckout, iDEAL, prijzen inclusief btw, geen klantaccounts,
-geen voorraadstand.
+Een B2C-webshop voor bevestigingsmateriaal, gedropshipt via FEKO BV.
+300-500 SKU's in acht categorieën. Gastcheckout, iDEAL, prijzen inclusief btw.
 
-De webshop wordt de hoofdsite. De bestaande hardloop-landingspagina verhuist naar
-een subpagina en blijft verder ongewijzigd.
+Dit is expliciet een **leerproject** met een mogelijke exit: draait de shop met
+voldoende omzet, dan is verkoop aan FEKO een reële optie. Die twee doelen sturen
+elke keuze hieronder.
 
-## 2. Stack en waarom
+Leerdoelen, in volgorde van belang:
 
-| Onderdeel | Keuze |
-|---|---|
-| Frontend | Astro 5 (bestaand), statische catalogus |
-| Hosting | Cloudflare Workers |
-| Orders | Cloudflare D1 |
-| Betalen | Mollie (iDEAL), €0,32 per transactie |
-| Ordermail | nog te kiezen, zie open punt 10.3 |
-| Productdata | xlsx → `products.json` in de repo |
+1. Doelgroepgericht promoten
+2. Locatiegericht promoten
+3. SEO
+4. Marketing
+5. Shopware leren kennen als webshop-backend
+
+De bestaande hardloop-landingspagina vervalt. Deze repo wordt de Shopware-repo.
+
+## 2. Platformkeuze
+
+**Shopware 6 Community Edition, self-hosted.**
+
+De doorslag geeft dat leerdoel 1, 2 en 4 in Shopware ingebouwde mechanismen zijn —
+Sales Channels, Rule Builder, Flow Builder, landingspagina's — in plaats van code
+die we zelf schrijven. Je leert marketing bedienen in plaats van marketing bouwen.
+Daarnaast is een Shopware-shop overdraagbaar: elk Shopware-bureau kan hem overnemen,
+wat het exit-scenario richting FEKO reëel maakt. Maatwerk is voor een koper vooral
+risico.
 
 Afgewogen en afgevallen:
 
-- **Snipcart** — minste code, maar DPA dateert uit mei 2018, noemt geen
-  doorgiftemechanisme, geen hostinglocatie en geen subverwerkerslijst. Bovendien
-  2% per transactie en orders buiten eigen beheer, wat botst met de bol.com-plannen.
-- **WooCommerce / Shopware** — betekent een PHP-applicatie en het einde van deze
-  codebase; Shopware is bij 500 SKU's B2C bovendien overgedimensioneerd.
-- **Payload CMS + plugin-ecommerce op Workers** — geeft een klik-admin, maar
-  Payload-op-Workers is een pilot (OpenNext-adapter, zelfgebouwde D1-adapter) en de
-  ecommerce-plugin heeft Stripe als standaardadapter, dus voor iDEAL schrijf je
-  alsnog zelf een Mollie-adapter.
-- **Merchant (Workers + D1 + Hono)** — de maker adviseert het zelf af voor productie.
-- **Medusa / Vendure** — draaien niet op Workers; vereisen een langlopende
-  Node-server met Postgres.
+- **Astro + Cloudflare Workers + D1 + Mollie** (het eerste ontwerp) — technisch het
+  goedkoopst en snelst, maar elke doelgroepgerichte frontend was een bouwproject
+  geweest, en voor een koper is maatwerk een last in plaats van een asset.
+- **Snipcart** — DPA uit mei 2018, geen doorgiftemechanisme, geen hostinglocatie,
+  geen subverwerkerslijst; plus 2% per transactie en orders buiten eigen beheer.
+- **WooCommerce** — beheer is lichter, maar multi-storefront en doelgroepsturing zijn
+  er zwak, en het draagt niets bij aan de gestelde leerdoelen.
+- **Payload CMS op Workers** — Payload-op-Workers is een pilot en de ecommerce-plugin
+  heeft Stripe als standaardadapter; voor iDEAL schrijf je alsnog zelf een adapter.
+- **Merchant (Workers + D1)** — de maker adviseert het zelf af voor productie.
+- **Medusa / Vendure** — draaien niet op Workers en dragen niet bij aan de leerdoelen.
 
-## 3. Architectuur
+### 2.1 Randvoorwaarden en grenzen
 
-Statische catalogus, dynamische checkout.
+- Community Edition is gratis tot circa €1 mln GMV per jaar (fair use policy).
+  Ruim voldoende, maar relevant bij verkoop aan FEKO.
+- De B2B Suite zit pas in Evolve (€2.400/mnd), niet in Rise en niet in CE. Wordt B2B
+  relevant, dan is B2Bsellers een derde partij die wél op CE draait. Nu niet nodig.
+- Cloudflare Workers vervalt als runtime. Shopware vraagt PHP 8.2+, MySQL 8.0+ of
+  MariaDB 10.11+, Composer 2.2+, Node 20 en minimaal 4 GB RAM. Cloudflare kan er
+  hooguit als CDN en WAF voor staan.
 
-```
-products.xlsx  ──npm run import──▶  src/data/products.json  ──build──▶  statische pagina's
-                                                            └────────▶  /producten.json (filterindex)
+## 3. Omgeving en hosting
 
-browser ──POST /api/checkout──▶ Worker ──▶ Mollie ──▶ betaalpagina
-                                   │
-Mollie ──POST /api/mollie-webhook──▶ Worker ──▶ D1 (orders) ──▶ ordermail
-```
+**Ontwikkeling lokaal met Docker. Productie op een eigen EU-VPS, pas zodra er iets
+te tonen valt.**
 
-De catalogus zit in de build en kost bij het bekijken geen enkele serveraanroep.
-Alleen afrekenen raakt een Worker.
+Reden voor die volgorde: Shopware op een zelfbeheerde VPS betekent PHP-FPM,
+database-tuning, Redis, cron, message queue workers, TLS, backups en updates. Dat
+allemaal vooraf doen betekent maanden sysadmin vóór het eerste leerdoel aan bod komt.
+De VPS blijft het doel — alleen niet als startpunt.
 
-### 3.1 Meerdere frontends later
-
-De backend is vanaf dag één een JSON-API, zodat een tweede, doelgroepgerichte
-frontend dezelfde Worker en dezelfde `products.json` kan gebruiken. Wat we nu
-bewust *niet* bouwen: kanalen- of tenantmodel, GraphQL, aparte backend-service,
-authenticatie.
-
-**Bekend plafond:** doelgroepgerichte content is gratis, doelgroepgerichte prijzen
-niet. Zodra een tweede frontend eigen prijzen krijgt (bijvoorbeeld zakelijke
-staffels), kunnen prijzen niet meer in de build gebakken worden. Upgradepad:
-prijzen uit D1 serveren in plaats van uit JSON, met de catalogus als fallback.
-
-## 4. Productdata
+## 4. Catalogus en productdata
 
 Bron is een xlsx die de eigenaar onderhoudt, gevoed vanuit FEKO's prijslijst.
-De build leest géén Excel. `npm run import` zet de xlsx om naar
-`src/data/products.json`, dat wordt meegecommit. Voordelen: prijswijzigingen zijn
-zichtbaar als diff, de build blijft simpel, en een kapotte spreadsheet haalt de
-shop niet stilletjes onderuit.
+Import via Shopware's ingebouwde CSV-import; de xlsx wordt eerst naar CSV omgezet.
 
-Structuur: families met varianten. Eén pagina per familie ("Houtschroef RVS
-platkop"), met een kiezer voor de maat. Elke variant is een eigen SKU met eigen
-prijs. Schatting: 8 categorieën, 40-60 families, 300-500 SKU's.
+Structuur: **producten met varianten**, niet honderden losse artikelen. Eén product
+("Houtschroef RVS platkop") met varianten over property groups. Schatting: 8
+categorieën, 40-60 producten, 300-500 varianten.
 
-Velden per SKU:
+Property groups (tevens de filters in de storefront):
 
-| Veld | Verplicht | Opmerking |
-|---|---|---|
-| `sku` | ja | uniek |
-| `familie` | ja | verwijst naar bestaande familie |
-| `categorie` | ja | één van de acht |
-| `naam` | ja | |
-| `prijs_incl_btw` | ja | eurocent, integer |
-| `btw_tarief` | ja | 21 |
-| `verpakkingsaantal` | ja | stuks per doos/zak |
-| `materiaal` | ja | facet, bijv. RVS / verzinkt |
-| `diameter_mm` | nee | facet |
-| `lengte_mm` | nee | facet |
-| `kopvorm` | nee | facet |
-| `gewicht_gram` | nee | wordt verplicht zodra verzenden op gewicht gaat, zie §7 |
-| `ean` | nee | vooruitlopend op bol.com, zie §9 |
-| `afbeelding` | nee | valt terug op categoriebeeld |
+| Groep | Voorbeeld |
+|---|---|
+| Materiaal | RVS, verzinkt |
+| Diameter | M4, M5, M6 |
+| Lengte | 20, 30, 40 mm |
+| Kopvorm | platkop, bolkop, verzonken |
+| Verpakkingsaantal | 100, 200, 500 stuks |
 
-Inkoopprijzen en marges blijven in de spreadsheet en komen niet in de repo of de HTML.
+Verder per variant: eigen artikelnummer, eigen prijs inclusief 21% btw, gewicht, en
+**EAN** — dat laatste vooruitlopend op bol.com, zie §8.
 
-## 5. Pagina's en URL's
+Inkoopprijzen en marges blijven in de spreadsheet en komen niet in Shopware.
 
-```
-/                              home, shop
-/{categorie}/                  8 categoriepagina's
-/{categorie}/{familie}/        familiepagina met variantkiezer
-/zoeken                        zoeken en filteren
-/winkelwagen
-/afrekenen
-/bestelling/{id}               bevestiging na betaling
-/hardlopen                     bestaande landingspagina, verhuisd
-/algemene-voorwaarden /retourneren /privacy /verzenden-en-betalen /contact
-```
+**Voorraad staat uit.** Artikelen zijn altijd bestelbaar (geen closeout), omdat FEKO
+levert en wij geen voorraadstand hebben. Gevolg: af en toe wordt iets verkocht dat
+FEKO niet heeft. Ondervanging: zichtbare levertijdmelding en terugbetalen bij
+nee-verkoop.
 
-## 6. Zoeken en filteren
+## 5. Leerdoelen, vertaald naar Shopware
 
-Hier zit de waarde van deze shop: bij bevestigingsmateriaal is het vinden van de
-juiste schroef het hele probleem.
+| Leerdoel | Waar het landt |
+|---|---|
+| Doelgroepgericht promoten | Sales Channels (eigen domein, design en taal op dezelfde catalogus) plus Rule Builder voor voorwaardelijke prijzen, verzendmethoden en promoties |
+| Locatiegericht promoten | Landingspagina's per regio via Shopping Experiences, eigen SEO-URL's, gestructureerde data en Google Business Profile — grotendeels platformonafhankelijk werk |
+| SEO | SEO-URL-templates, meta-velden, sitemap en canonicals zitten in Shopware; Core Web Vitals vragen cache- en tuningwerk, want Shopware is niet snel out of the box |
+| Marketing | Flow Builder voor automatisering, promoties en kortingscodes, nieuwsbrief-integratie |
 
-Eén index van ~500 items (±100 kB) wordt bij de build gegenereerd en filtert
-client-side. Facetten: categorie, materiaal, diameter, lengte, kopvorm,
-verpakkingsaantal. Tekstzoek op naam en SKU, zodat "M6x40 rvs" werkt.
+Dat laatste punt is een echte spanning met leerdoel 3: een statische site is snel
+by default, Shopware niet. Die tuning is hier onderdeel van het leren, geen bijzaak.
 
-Geen zoekserver, geen Algolia. Bij deze omvang is dat overhead zonder opbrengst.
+## 6. Betalen en verzenden
 
-## 7. Winkelwagen, verzending en afrekenen
+Betalen via de officiële Mollie-plugin voor Shopware 6, met iDEAL als primaire
+methode. €0,32 per iDEAL-transactie, geen vaste kosten. Te verifiëren bij installatie:
+pluginversie tegen Shopware 6.7.
 
-Winkelwagen in `localStorage`, alleen SKU's en aantallen — nooit prijzen.
+Verzendkosten bij livegang: vast €6,95, gratis boven €75. Gewicht staat per variant
+in de data, zodat een zwaartestaffel via de Rule Builder toegevoegd kan worden zodra
+FEKO's dropship-tarief bekend is.
 
-Afrekenen:
+Met FEKO te regelen: tarief per zending, wat er gebeurt boven 10 kg (daar zetten
+zowel PostNL als DHL een klasse-sprong), en wie de retourvracht betaalt — dat laatste
+wordt bij 14 dagen bedenktijd anders een structurele kostenpost.
 
-1. Browser POST't SKU's en aantallen naar `/api/checkout`.
-2. De Worker **herberekent alle prijzen server-side** uit `products.json`. Prijzen
-   uit de client worden genegeerd.
-3. Worker maakt een Mollie-betaling en schrijft de order als `open` in D1.
-4. Browser volgt de Mollie-betaallink.
-5. Mollie roept `/api/mollie-webhook` aan; de Worker haalt de status op bij Mollie
-   (vertrouwt de webhook-inhoud niet), werkt de order bij en verstuurt de ordermail.
-   De webhook is idempotent: dezelfde melding tweemaal verwerken verandert niets.
+Marktbenchmark voor die onderhandeling: PostNL zakelijk circa €7,10, DHL circa €6,45
+naar een huisadres, circa €5,45 via MyParcel bij ~150 zendingen per maand. Zit FEKO
+daar duidelijk boven, dan verdient zelf verzenden een herberekening.
 
-Verzendkosten bij livegang: vast €6,95, gratis boven €75. `gewicht_gram` staat wel
-in de data maar wordt nog niet gebruikt, zodat er een zwaartestaffel bij kan zodra
-FEKO's dropship-tarief bekend is, zonder de productdata opnieuw te maken.
+Terugbetalingen gaan via het Mollie-dashboard of de Shopware-administratie.
 
-Er lopen gesprekken met FEKO over een vast dropship-tarief; zodra dat er is, wordt
-dat de basis onder het verzendtarief. Punten om daar te regelen: tarief per
-zending, wat er gebeurt boven 10 kg, en wie de retourvracht betaalt.
+## 7. Orderafhandeling
 
-Marktbenchmark voor die onderhandeling: PostNL zakelijk circa €7,10, DHL circa
-€6,45 naar een huisadres, circa €5,45 via MyParcel bij ~150 zendingen per maand.
+Order komt binnen in Shopware. De eigenaar bestelt handmatig bij FEKO, FEKO verzendt
+naar de klant. Geen koppeling met FEKO bij livegang — die bouw je pas als het
+handwerk pijn doet, en dan pas weet je ook wat je precies moet koppelen.
 
-Terugbetalingen gaan met de hand via het Mollie-dashboard. Geen code.
+## 8. bol.com
 
-## 8. Orderafhandeling
-
-Order komt binnen per mail en staat in D1. De eigenaar bestelt handmatig bij FEKO,
-FEKO verzendt naar de klant. Geen admin-UI bij livegang. Een read-only orderpagina
-komt er pas als de mailstroom gaat irriteren.
-
-Zonder voorraadstand wordt af en toe iets verkocht dat FEKO niet heeft. Dat is een
-bewuste keuze. Ondervanging: zichtbare levertijdmelding op productpagina's en
-terugbetalen bij nee-verkoop.
-
-## 9. bol.com
-
-Wordt nu niet gebouwd. Eén voorbereiding die later niet in te halen is: `ean` per
-SKU in het schema. Zonder EAN kun je op bol niet aanbieden.
+Wordt nu niet gebouwd. Eén voorbereiding die later niet in te halen is: EAN per
+variant. Zonder EAN kun je op bol niet aanbieden.
 
 Waarschuwing voor dat moment: bol rekent hard af op levertijd en annuleringen, dus
 "geen voorraadstand" wordt daar duurder dan op de eigen site.
 
-## 10. Juridisch en privacy
+## 9. Juridisch en privacy
 
-### 10.1 Verplichte pagina's
-Algemene voorwaarden, retourrecht van 14 dagen inclusief modelformulier,
-privacy- en cookiebeleid, zichtbare verzend- en betaalinformatie, KvK- en
-btw-nummer in de footer. Als dropshipper ben jij de verkoper: retouren en garantie
-komen bij jou terecht, ook al zie je het pakket nooit.
+Verplicht: algemene voorwaarden, retourrecht van 14 dagen inclusief modelformulier,
+privacy- en cookiebeleid, zichtbare verzend- en betaalinformatie, KvK- en btw-nummer
+in de footer. Als dropshipper ben jij de verkoper: retouren en garantie komen bij jou
+terecht, ook al zie je het pakket nooit.
 
-### 10.2 AVG
-Klantgegevens staan in D1 op het eigen Cloudflare-account, met EU-locatiehint.
-Verwerkers: Cloudflare, Mollie (Nederlands) en de mailprovider. Verwerkingsregister
-en privacyverklaring benoemen alle drie.
+AVG wordt met deze keuze eenvoudiger dan met elk SaaS-alternatief: klantgegevens staan
+op de eigen EU-server. Verwerkers zijn de hoster en Mollie (Nederlands), plus een
+mailprovider indien die niet zelf gehost wordt. Shopware heeft cookie-consent
+ingebouwd. Verwerkingsregister en privacyverklaring benoemen alle partijen.
 
-### 10.3 Open punten vóór livegang
-1. Dropship-afspraken met FEKO vastleggen: tarief per zending, retourprocedure,
-   of er blanco (zonder FEKO-branding) verzonden wordt.
-2. Mailprovider kiezen met EU-verwerking; Resend is Amerikaans, dus regio en DPA
-   controleren of een EU-alternatief nemen.
-3. D1 aanmaken met EU-locatiehint en dat verifiëren.
-4. Domeinnaam bepalen: `justscrewitrunning.com` staat nu in `astro.config.mjs` en
-   past niet bij een bevestigingsmaterialenshop.
+## 10. Wat we bewust niet bouwen
 
-## 11. Wat we bewust niet bouwen
+Geen B2B Suite, geen custom plugins zolang standaardfunctionaliteit volstaat, geen
+headless frontend (Sales Channels volstaan), geen FEKO-koppeling, geen
+voorraadbeheer, geen admin-maatwerk, geen meertaligheid.
 
-Geen klantaccounts, geen voorraadbeheer, geen wishlist, geen reviews, geen
-meertaligheid, geen B2B-prijzen, geen PIM, geen admin-UI, geen adapterlaag rond
-Mollie, geen kanalenmodel.
+## 11. Fasering
+
+| Fase | Resultaat |
+|---|---|
+| 0 | Shopware draait lokaal in Docker; Astro verwijderd uit de repo |
+| 1 | Catalogus: categorieën, property groups, import vanuit de FEKO-lijst, filters werkend |
+| 2 | Mollie, verzendmethode, juridische pagina's, testbestelling end-to-end |
+| 3 | Productie op eigen EU-VPS, TLS, backups, Cloudflare ervoor |
+| 4 | Leerdoelen: Sales Channels, Rule Builder, SEO en Core Web Vitals, Flow Builder |
 
 ## 12. Verificatie
 
-Eén runnable check: een validatiescript over `products.json` dat faalt bij dubbele
-SKU's, prijs ≤ 0, ontbrekende verplichte velden, een variant zonder bestaande
-familie, of een onbekende categorie. Draait in de build, zodat een kapotte
-spreadsheet nooit een schroef van €0,00 live zet.
+- Een validatiescript over de importlijst dat faalt bij dubbele artikelnummers,
+  prijs ≤ 0, ontbrekende verplichte velden of een onbekende categorie. Een kapotte
+  spreadsheet mag nooit een schroef van €0,00 live zetten.
+- Eén complete testbestelling met Mollie in testmodus: product kiezen, variant kiezen,
+  afrekenen, betalen, orderbevestiging, order zichtbaar in de administratie.
+- Vóór livegang: Lighthouse-meting als nulmeting voor leerdoel 3.
 
-Daarnaast tests op het enige echt kritische stuk logica: de prijsherberekening in
-`/api/checkout` (client-prijzen worden genegeerd, totaal klopt, verzendgrens werkt)
-en de idempotentie van de Mollie-webhook.
+## 13. Open punten vóór livegang
+
+1. Dropship-afspraken met FEKO: tarief per zending, retourprocedure, en of er blanco
+   verzonden wordt zonder FEKO-branding.
+2. Domeinnaam kiezen. `justscrewitrunning.com` uit de oude Astro-config vervalt.
+3. Mailprovider kiezen met EU-verwerking, of mail via de eigen server.
+4. VPS-provider en backupstrategie bepalen vóór fase 3.
