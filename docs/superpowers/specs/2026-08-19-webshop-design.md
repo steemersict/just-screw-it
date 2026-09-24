@@ -194,8 +194,10 @@ komt opnieuw op tafel.
 
 **Wel als fase 5 vastgelegd:** zodra de shop draait, een headless storefront als
 tweede Sales Channel voor één doelgroep, naast de Twig-versie zodat ze te vergelijken
-zijn. Valt die keuze dan, dan ligt Nuxt voor de hand boven Astro — Shopware's
-CMS-componenten en composables zijn Vue-specifiek, dus in Astro bouw je die zelf.
+zijn. Framework: Astro, omdat de eigenaar daar zijn overige sites in bouwt. De
+Shopware API-client is framework-onafhankelijk; waar een Vue-composable van Shopware
+toch nodig is, kan die als island in Astro. Bevalt Astro, dan kunnen de Twig-kanalen
+daarna één voor één vervangen worden, met de werkende Twig-shop als vangnet.
 
 ## 11. Fasering
 
