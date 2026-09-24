@@ -82,6 +82,8 @@ Gevolgen voor de taken hieronder:
   3. Shopware laten weten dat het achter een proxy staat. **Gedaan** in taak 4 via
      `SYMFONY_TRUSTED_PROXIES=private_ranges`.
   4. `X-Robots-Tag: noindex` als response-header via een Cloudflare Transform Rule.
+     **Overgeslagen** (24 sep 2026): Access houdt crawlers al volledig tegen. Alleen
+     nodig als er ooit pagina's zonder Access bereikbaar worden vóór livegang.
   5. Poort 80 en 443 dicht in de host-firewall; de tunnel belt zelf naar buiten.
      **Gedaan** (24 sep 2026): direct verbinden op 80/443 faalt, de tunnel werkt.
   Tot die tijd test je Shopware via Tailscale.
