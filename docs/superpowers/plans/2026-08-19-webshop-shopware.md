@@ -83,6 +83,7 @@ Gevolgen voor de taken hieronder:
      `SYMFONY_TRUSTED_PROXIES=private_ranges`.
   4. `X-Robots-Tag: noindex` als response-header via een Cloudflare Transform Rule.
   5. Poort 80 en 443 dicht in de host-firewall; de tunnel belt zelf naar buiten.
+     **Gedaan** (24 sep 2026): direct verbinden op 80/443 faalt, de tunnel werkt.
   Tot die tijd test je Shopware via Tailscale.
 
 ---
