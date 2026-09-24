@@ -44,6 +44,17 @@ Gevolgen voor de taken hieronder:
 - **Taak 1** is grotendeels gedaan op de host. In CT 101 is alleen nog een
   niet-root gebruiker nodig; de firewall zit op de host, niet in de container.
 - **Taak 2** is gedaan: Docker draait in CT 101.
+- **Taak 3b is gedaan** (24 sep 2026, commit 6ffeb87). Repo staat in CT 101 onder
+  `/root/just-screw-it`, met een eigen deploy key met schrijfrechten. Het skelet is
+  gemaakt met `composer create-project shopware/production` in de `composer:2`-container,
+  dus Node was niet nodig. Shopware 6.7.14.2.
+  Let op voor taak 4: het skelet volgt de Symfony-conventie. `.env` staat in git met
+  alleen standaardwaarden; geheimen (`APP_SECRET`, `INSTANCE_ID`, straks database-
+  wachtwoorden) staan in `.env.local`, dat genegeerd wordt. Het skelet levert zelf een
+  `compose.yaml` mee met MariaDB 11.8 en OpenSearch; gebruik die als basis in plaats
+  van het voorbeeld in taak 4 stap 2, en laat OpenSearch weg (spec: niet nodig).
+  De post-install-scripts faalden in de Composer-container (`Pdo\Mysql` ontbreekt);
+  die draaien in taak 4 alsnog in de echte PHP-omgeving.
 - **Taak 3b en verder** voer je uit **in CT 101** (`ssh root@10.10.0.101` via de host,
   of `pct enter 101` op de host), niet op de host zelf.
 - **Taak 5 vervalt in zijn huidige vorm.** In plaats van Caddy met TLS en basic auth
