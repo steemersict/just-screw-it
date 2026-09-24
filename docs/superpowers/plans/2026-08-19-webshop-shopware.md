@@ -23,6 +23,33 @@
 
 **Startvoorwaarde:** de VPS bestaat, draait Ubuntu 24.04 LTS (of Debian 12), is bereikbaar via SSH als root of een sudo-gebruiker, en heeft een publiek IP. De eigenaar regelt dit zelf.
 
+### Afwijking infrastructuur (24 september 2026)
+
+De VPS is een Netcup-server met **Proxmox VE 9.2 op Debian 13**, zodat later meer
+projecten als losse containers naast de shop kunnen. Shopware draait daardoor niet
+direct op de VPS maar in een LXC-container. Wat al staat:
+
+| Onderdeel | Waarde |
+|---|---|
+| Host | 152.53.244.97, Proxmox-webinterface op poort 8006 |
+| Tailscale op de host | 100.114.9.96, naam `pve` |
+| Firewall host | aan; 8006 alleen vanaf IPset `beheer` (twee beheer-IP's en 100.64.0.0/10); 22, 80, 443 open |
+| SSH host | alleen sleutels |
+| Interne bridge | `vmbr1`, 10.10.0.1/24, NAT naar buiten |
+| Shopware-container | CT 101 `shopware`, Ubuntu 24.04, 4 cores, 6 GB RAM, 60 GB, 10.10.0.101, nesting en keyctl aan, start mee bij boot |
+| Docker in CT 101 | Docker 29.8 en Compose v5.5, getest met hello-world |
+
+Gevolgen voor de taken hieronder:
+
+- **Taak 1** is grotendeels gedaan op de host. In CT 101 is alleen nog een
+  niet-root gebruiker nodig; de firewall zit op de host, niet in de container.
+- **Taak 2** is gedaan: Docker draait in CT 101.
+- **Taak 3b en verder** voer je uit **in CT 101** (`ssh root@10.10.0.101` via de host,
+  of `pct enter 101` op de host), niet op de host zelf.
+- **Taak 5** heeft een extra stap nodig: poort 80 en 443 van de host doorsturen naar
+  10.10.0.101 (DNAT), anders kan Caddy geen certificaat halen en is de shop niet
+  bereikbaar.
+
 ---
 
 ## Fase 0 — VPS, Docker en Shopware bereikbaar
