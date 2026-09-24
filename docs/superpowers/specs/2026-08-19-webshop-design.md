@@ -220,6 +220,6 @@ CMS-componenten en composables zijn Vue-specifiek, dus in Astro bouw je die zelf
 
 1. Dropship-afspraken met FEKO: tarief per zending, retourprocedure, en of er blanco
    verzonden wordt zonder FEKO-branding.
-2. Domeinnaam kiezen. `justscrewitrunning.com` uit de oude Astro-config vervalt.
+2. Domeinnaam kiezen en registreren. Er is nog geen domein; `justscrewitrunning.com` in de oude Astro-config was een placeholder.
 3. Mailprovider kiezen met EU-verwerking, of mail via de eigen server.
 4. VPS-provider kiezen en de eerste restore-test uitvoeren in fase 0.
