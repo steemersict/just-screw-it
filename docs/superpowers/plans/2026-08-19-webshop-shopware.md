@@ -53,7 +53,8 @@ Gevolgen voor de taken hieronder:
   `shop.justscrewit.nl`; de root is in gebruik en wordt later gekoppeld.
   1. Public hostname op de tunnel: `shop.justscrewit.nl` naar `http://localhost:8000`.
      **Gedaan** (24 sep 2026); geeft 502 zolang Shopware nog niet draait.
-  **Stap 2 moet af zijn vóór taak 4 Shopware start**, anders staat de shop open.
+  Stap 2 (Access) is **gedaan** (24 sep 2026): alle paden sturen door naar de
+  Cloudflare-login. De bypass voor het Mollie-webhookpad volgt bij taak 10.
   2. Cloudflare Access ervoor als afscherming tot livegang, met een bypass-regel voor
      het Mollie-webhookpad, anders komen betalingen niet binnen.
   3. Shopware laten weten dat het achter een proxy staat (`TRUSTED_PROXIES`), zodat
