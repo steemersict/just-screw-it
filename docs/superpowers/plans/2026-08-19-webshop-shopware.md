@@ -49,8 +49,11 @@ Gevolgen voor de taken hieronder:
 - **Taak 5 vervalt in zijn huidige vorm.** In plaats van Caddy met TLS en basic auth
   loopt het verkeer via een **Cloudflare Tunnel**. De connector `cloudflared` draait
   al als systemd-dienst in CT 101 (tunnel `justscrewit`, 4 verbindingen via Frankfurt).
-  Wat nog moet zodra het domein bij Cloudflare staat:
-  1. Public hostname op de tunnel: `<domein>` naar `http://localhost:8000`.
+  Domein: `justscrewit.nl` staat bij Cloudflare. De shop draait op
+  `shop.justscrewit.nl`; de root is in gebruik en wordt later gekoppeld.
+  1. Public hostname op de tunnel: `shop.justscrewit.nl` naar `http://localhost:8000`.
+     **Gedaan** (24 sep 2026); geeft 502 zolang Shopware nog niet draait.
+  **Stap 2 moet af zijn vóór taak 4 Shopware start**, anders staat de shop open.
   2. Cloudflare Access ervoor als afscherming tot livegang, met een bypass-regel voor
      het Mollie-webhookpad, anders komen betalingen niet binnen.
   3. Shopware laten weten dat het achter een proxy staat (`TRUSTED_PROXIES`), zodat

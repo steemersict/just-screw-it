@@ -222,6 +222,6 @@ daarna één voor één vervangen worden, met de werkende Twig-shop als vangnet.
 
 1. Dropship-afspraken met FEKO: tarief per zending, retourprocedure, en of er blanco
    verzonden wordt zonder FEKO-branding.
-2. Domeinnaam kiezen en registreren. Er is nog geen domein; `justscrewitrunning.com` in de oude Astro-config was een placeholder.
+2. Domein: `justscrewit.nl` staat bij Cloudflare. De shop draait op `shop.justscrewit.nl`; de root is in gebruik en wordt later gekoppeld. (Afgerond 24 sep 2026.)
 3. Mailprovider kiezen met EU-verwerking, of mail via de eigen server.
 4. VPS-provider kiezen en de eerste restore-test uitvoeren in fase 0.
