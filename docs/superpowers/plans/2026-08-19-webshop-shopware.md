@@ -55,6 +55,17 @@ Gevolgen voor de taken hieronder:
   van het voorbeeld in taak 4 stap 2, en laat OpenSearch weg (spec: niet nodig).
   De post-install-scripts faalden in de Composer-container (`Pdo\Mysql` ontbreekt);
   die draaien in taak 4 alsnog in de echte PHP-omgeving.
+- **Taak 4 is gedaan** (24 sep 2026, commits 1175e42..58612bc). Opzet volgens de
+  officiële Docker-documentatie in plaats van het voorbeeld hieronder: eigen
+  `Dockerfile` op `ghcr.io/shopware/docker-base:8.4-frankenphp` (8.4 is nodig, de
+  lockfile bevat pakketten die het eisen), `shopware-deployment-helper` voor de
+  installatie, aparte containers voor web, worker en scheduler. Geheimen en het
+  eerste admin-account staan in `.env.local` in CT 101. Installatie in `nl-NL` en EUR.
+  Redis en OpenSearch bewust weggelaten zolang er één webcontainer is.
+  Controle: storefront 200 met Host `shop.justscrewit.nl`, admin 200, links in https.
+  Op `127.0.0.1` zonder Host geeft de storefront 400; dat klopt, er is geen
+  verkoopkanaal voor dat adres.
+  Starten en bijwerken: `cd /root/just-screw-it && git pull && docker compose up -d --build`.
 - **Taak 3b en verder** voer je uit **in CT 101** (`ssh root@10.10.0.101` via de host,
   of `pct enter 101` op de host), niet op de host zelf.
 - **Taak 5 vervalt in zijn huidige vorm.** In plaats van Caddy met TLS en basic auth
@@ -68,8 +79,8 @@ Gevolgen voor de taken hieronder:
   Cloudflare-login. De bypass voor het Mollie-webhookpad volgt bij taak 10.
   2. Cloudflare Access ervoor als afscherming tot livegang, met een bypass-regel voor
      het Mollie-webhookpad, anders komen betalingen niet binnen.
-  3. Shopware laten weten dat het achter een proxy staat (`TRUSTED_PROXIES`), zodat
-     het echte bezoekers-IP en https herkent.
+  3. Shopware laten weten dat het achter een proxy staat. **Gedaan** in taak 4 via
+     `SYMFONY_TRUSTED_PROXIES=private_ranges`.
   4. `X-Robots-Tag: noindex` als response-header via een Cloudflare Transform Rule.
   5. Poort 80 en 443 dicht in de host-firewall; de tunnel belt zelf naar buiten.
   Tot die tijd test je Shopware via Tailscale.
