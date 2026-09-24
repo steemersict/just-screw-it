@@ -66,6 +66,12 @@ Gevolgen voor de taken hieronder:
   Op `127.0.0.1` zonder Host geeft de storefront 400; dat klopt, er is geen
   verkoopkanaal voor dat adres.
   Starten en bijwerken: `cd /root/just-screw-it && git pull && docker compose up -d --build`.
+- **Taak 6 is gedaan** (24 sep 2026, commit 6ac103d). `tools/backup.sh` maakt een
+  database-dump plus archieven van de volumes `media` en `files` naar
+  `/var/backups/shop` in CT 101, 14 dagen bewaard, dagelijks om 03:30 via cron.
+  Restore getest in een aparte database: 255 tabellen, 1 verkoopkanaal en 1 gebruiker,
+  gelijk aan het origineel. **Open:** de backups staan op dezelfde server; een externe
+  kopie ontbreekt nog.
 - **Taak 3b en verder** voer je uit **in CT 101** (`ssh root@10.10.0.101` via de host,
   of `pct enter 101` op de host), niet op de host zelf.
 - **Taak 5 vervalt in zijn huidige vorm.** In plaats van Caddy met TLS en basic auth
