@@ -1,53 +1,99 @@
+# Productie-stack volgens https://developer.shopware.com/docs/guides/hosting/installation-updates/docker.html
+# Geheimen (APP_SECRET, database-wachtwoorden, eerste admin) staan in .env.local, niet in git.
+
+x-shopware: &shopware
+  build:
+    context: .
+  image: justscrewit-shop:latest
+  env_file: .env.local
+  environment:
+    APP_URL: https://shop.justscrewit.nl
+    # Cloudflare Tunnel komt binnen via een intern adres; vertrouw alleen interne proxies
+    SYMFONY_TRUSTED_PROXIES: private_ranges
+  volumes:
+    - files:/var/www/html/files
+    - theme:/var/www/html/public/theme
+    - media:/var/www/html/public/media
+    - thumbnail:/var/www/html/public/thumbnail
+    - sitemap:/var/www/html/public/sitemap
+  restart: unless-stopped
 
 services:
-###> shopware/core ###
   database:
     image: mariadb:11.8
+    env_file: .env.local
     environment:
       MARIADB_DATABASE: shopware
-      MARIADB_ROOT_PASSWORD: root
       MARIADB_USER: shopware
-      MARIADB_PASSWORD: shopware
     volumes:
-      - db-data:/var/lib/mysql:rw
+      - db-data:/var/lib/mysql
     command:
       - --sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
       - --log_bin_trust_function_creators=1
-      - --binlog_cache_size=16M
-      - --key_buffer_size=0
-      - --join_buffer_size=1024M
-      - --innodb_log_file_size=128M
-      - --innodb_buffer_pool_size=1024M
-      - --innodb_buffer_pool_instances=1
       - --group_concat_max_len=320000
       - --default-time-zone=+00:00
-      - --max_binlog_size=512M
-      - --binlog_expire_logs_seconds=86400
+      - --innodb_buffer_pool_size=1024M
     healthcheck:
-      test: [ "CMD", "mariadb-admin" ,"ping", "-h", "localhost", "-proot" ]
-      start_period: 10s
-      start_interval: 3s
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
-      timeout: 1s
-      retries: 10
-###< shopware/core ###
+      retries: 20
+    restart: unless-stopped
 
-###> shopware/elasticsearch ###
-  opensearch:
-    image: opensearchproject/opensearch:2
-    volumes:
-      - opensearch-data:/usr/share/opensearch/data
+  init-perm:
+    <<: *shopware
+    user: "root"
+    restart: "no"
+    entrypoint: >
+      chown 82:82
+      /var/www/html/files
+      /var/www/html/public/theme
+      /var/www/html/public/media
+      /var/www/html/public/thumbnail
+      /var/www/html/public/sitemap
+
+  init:
+    <<: *shopware
+    restart: "no"
     environment:
-      OPENSEARCH_INITIAL_ADMIN_PASSWORD: 'c3o_ZPHo!'
-      discovery.type: single-node
-      plugins.security.disabled: 'true'
-###< shopware/elasticsearch ###
+      APP_URL: https://shop.justscrewit.nl
+      SYMFONY_TRUSTED_PROXIES: private_ranges
+      INSTALL_LOCALE: nl-NL
+      INSTALL_CURRENCY: EUR
+    entrypoint: ["php", "vendor/bin/shopware-deployment-helper", "run"]
+    depends_on:
+      database:
+        condition: service_healthy
+      init-perm:
+        condition: service_completed_successfully
+
+  web:
+    <<: *shopware
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    # Alleen lokaal: cloudflared in deze container stuurt het verkeer door
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  # ponytail: 1 worker; meer replicas pas als de wachtrij achterloopt
+  worker:
+    <<: *shopware
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    entrypoint: ["php", "bin/console", "messenger:consume", "async", "low_priority", "--time-limit=300", "--memory-limit=512M"]
+
+  scheduler:
+    <<: *shopware
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    entrypoint: ["php", "bin/console", "scheduled-task:run"]
 
 volumes:
-###> shopware/core ###
   db-data:
-###< shopware/core ###
-
-###> shopware/elasticsearch ###
-  opensearch-data:
-###< shopware/elasticsearch ###
+  files:
+  theme:
+  media:
+  thumbnail:
+  sitemap:

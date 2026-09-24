@@ -1,0 +1,18 @@
+# Geheimen nooit in de image
+.env.local
+.env.*.local
+auth.json
+
+# Niet nodig in de image
+.git
+.superpowers
+docs
+tools
+vendor
+var
+node_modules
+files
+public/media
+public/theme
+public/thumbnail
+public/sitemap
