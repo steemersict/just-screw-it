@@ -46,9 +46,18 @@ Gevolgen voor de taken hieronder:
 - **Taak 2** is gedaan: Docker draait in CT 101.
 - **Taak 3b en verder** voer je uit **in CT 101** (`ssh root@10.10.0.101` via de host,
   of `pct enter 101` op de host), niet op de host zelf.
-- **Taak 5** heeft een extra stap nodig: poort 80 en 443 van de host doorsturen naar
-  10.10.0.101 (DNAT), anders kan Caddy geen certificaat halen en is de shop niet
-  bereikbaar.
+- **Taak 5 vervalt in zijn huidige vorm.** In plaats van Caddy met TLS en basic auth
+  loopt het verkeer via een **Cloudflare Tunnel**. De connector `cloudflared` draait
+  al als systemd-dienst in CT 101 (tunnel `justscrewit`, 4 verbindingen via Frankfurt).
+  Wat nog moet zodra het domein bij Cloudflare staat:
+  1. Public hostname op de tunnel: `<domein>` naar `http://localhost:8000`.
+  2. Cloudflare Access ervoor als afscherming tot livegang, met een bypass-regel voor
+     het Mollie-webhookpad, anders komen betalingen niet binnen.
+  3. Shopware laten weten dat het achter een proxy staat (`TRUSTED_PROXIES`), zodat
+     het echte bezoekers-IP en https herkent.
+  4. `X-Robots-Tag: noindex` als response-header via een Cloudflare Transform Rule.
+  5. Poort 80 en 443 dicht in de host-firewall; de tunnel belt zelf naar buiten.
+  Tot die tijd test je Shopware via Tailscale.
 
 ---
 
